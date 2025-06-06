@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>LED Matrix Control</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    input, button { font-size: 18px; margin: 10px; }
+    label { display: block; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>LED Matrix Controller</h1>
+
+  <label>Text:
+    <input id="textInput" placeholder="Type message..." oninput="updateText()" />
+  </label>
+
+  <label>Speed (ms delay per frame):
+    <input type="number" id="speedInput" value="50" oninput="updateSpeed()" />
+  </label>
+
+  <h2>Animation Style</h2>
+  <button onclick="setAnimation('scroll-left')">Scroll Left</button>
+  <button onclick="setAnimation('scroll-right')">Scroll Right</button>
+  <button onclick="setAnimation('fade')">Fade</button>
+  <button onclick="setAnimation('wipe')">Wipe</button>
+  <button onclick="setAnimation('print')">Print</button>
+
+  <script>
+    const socket = new WebSocket("ws://" + location.hostname + ":81");
+
+    let currentText = "";
+    let currentSpeed = 50;
+    let currentAnimation = "scroll-left";
+
+    function updateText() {
+      currentText = document.getElementById("textInput").value;
+    }
+
+    function updateSpeed() {
+      currentSpeed = parseInt(document.getElementById("speedInput").value) || 50;
+    }
+
+    function setAnimation(anim) {
+      currentAnimation = anim;
+
+      // Send full state to ESP
+      const payload = {
+        id: 1,
+        text: currentText,
+        speed: currentSpeed,
+        animation: currentAnimation
+      };
+
+      socket.send(JSON.stringify(payload));
+    }
+  </script>
+</body>
+</html>
