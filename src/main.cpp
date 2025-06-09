@@ -28,6 +28,7 @@ textEffect_t animIn = PA_SCROLL_LEFT;
 textEffect_t animOut = PA_SCROLL_LEFT;
 uint16_t scrollSpeed = 50;
 
+
 void handleWebSocketMessage(uint8_t num, uint8_t* payload, size_t length) {
   StaticJsonDocument<256> doc;
   DeserializationError error = deserializeJson(doc, payload);
@@ -36,36 +37,84 @@ void handleWebSocketMessage(uint8_t num, uint8_t* payload, size_t length) {
     return;
   }
 
+  // Extract values from JSON
   int id = doc["id"];
   String text = doc["text"];
   String animation = doc["animation"];
   int speed = doc["speed"];
+  bool invert = doc["invert"] | false;  // Default false if not provided
 
   currentText = text;
   scrollSpeed = speed;
 
-  // Match animation style to effects
-  if (animation == "scroll-left") {
-    animIn = PA_SCROLL_LEFT;
-    animOut = PA_SCROLL_LEFT;
-  } else if (animation == "scroll-right") {
-    animIn = PA_SCROLL_RIGHT;
-    animOut = PA_SCROLL_RIGHT;
-  } else if (animation == "fade") {
-    animIn = PA_FADE;
-    animOut = PA_FADE;
-  } else if (animation == "wipe") {
-    animIn = PA_WIPE;
-    animOut = PA_WIPE;
-  } else {
-    animIn = PA_PRINT;
-    animOut = PA_NO_EFFECT;
-  }
+  // Match animation style
+ if (animation == "PA_PRINT") {
+  animIn = PA_PRINT; animOut = PA_NO_EFFECT;
+} else if (animation == "PA_SLICE") {
+  animIn = animOut = PA_SLICE;
+} else if (animation == "PA_MESH") {
+  animIn = animOut = PA_MESH;
+} else if (animation == "PA_FADE") {
+  animIn = animOut = PA_FADE;
+} else if (animation == "PA_WIPE") {
+  animIn = animOut = PA_WIPE;
+} else if (animation == "PA_WIPE_CURSOR") {
+  animIn = animOut = PA_WIPE_CURSOR;
+} else if (animation == "PA_OPENING") {
+  animIn = animOut = PA_OPENING;
+} else if (animation == "PA_OPENING_CURSOR") {
+  animIn = animOut = PA_OPENING_CURSOR;
+} else if (animation == "PA_CLOSING") {
+  animIn = animOut = PA_CLOSING;
+} else if (animation == "PA_CLOSING_CURSOR") {
+  animIn = animOut = PA_CLOSING_CURSOR;
+} else if (animation == "PA_RANDOM") {
+  animIn = animOut = PA_RANDOM;
+} else if (animation == "PA_BLINDS") {
+  animIn = animOut = PA_BLINDS;
+} else if (animation == "PA_DISSOLVE") {
+  animIn = animOut = PA_DISSOLVE;
+} else if (animation == "PA_SCROLL_UP") {
+  animIn = animOut = PA_SCROLL_UP;
+} else if (animation == "PA_SCROLL_DOWN") {
+  animIn = animOut = PA_SCROLL_DOWN;
+} else if (animation == "PA_SCROLL_LEFT") {
+  animIn = animOut = PA_SCROLL_LEFT;
+} else if (animation == "PA_SCROLL_RIGHT") {
+  animIn = animOut = PA_SCROLL_RIGHT;
+} else if (animation == "PA_SCROLL_UP_LEFT") {
+  animIn = animOut = PA_SCROLL_UP_LEFT;
+} else if (animation == "PA_SCROLL_UP_RIGHT") {
+  animIn = animOut = PA_SCROLL_UP_RIGHT;
+} else if (animation == "PA_SCROLL_DOWN_LEFT") {
+  animIn = animOut = PA_SCROLL_DOWN_LEFT;
+} else if (animation == "PA_SCROLL_DOWN_RIGHT") {
+  animIn = animOut = PA_SCROLL_DOWN_RIGHT;
+} else if (animation == "PA_SCAN_HORIZ") {
+  animIn = animOut = PA_SCAN_HORIZ;
+} else if (animation == "PA_SCAN_HORIZX") {
+  animIn = animOut = PA_SCAN_HORIZX;
+} else if (animation == "PA_SCAN_VERT") {
+  animIn = animOut = PA_SCAN_VERT;
+} else if (animation == "PA_SCAN_VERTX") {
+  animIn = animOut = PA_SCAN_VERTX;
+} else if (animation == "PA_GROW_UP") {
+  animIn = animOut = PA_GROW_UP;
+} else if (animation == "PA_GROW_DOWN") {
+  animIn = animOut = PA_GROW_DOWN;
+} else {
+  animIn = PA_PRINT;
+  animOut = PA_NO_EFFECT;
+}
 
 
-   // Set up display
+  // Invert display if requested
+  display.setInvert(invert);
+
+  // Set up and show
   display.displayClear();
   display.displayText(currentText.c_str(), PA_CENTER, scrollSpeed, 1000, animIn, animOut);
+
   Serial.println("Updated display via WebSocket");
 }
 
