@@ -4,7 +4,7 @@
   <title>LED Matrix Control</title>
   <style>
     body { font-family: sans-serif; padding: 20px; }
-    input, button { font-size: 18px; margin: 10px; }
+    input, button, select { font-size: 18px; margin: 10px; }
     label { display: block; margin-top: 10px; }
   </style>
 </head>
@@ -19,41 +19,124 @@
     <input type="number" id="speedInput" value="50" oninput="updateSpeed()" />
   </label>
 
-  <h2>Animation Style</h2>
-  <button onclick="setAnimation('scroll-left')">Scroll Left</button>
-  <button onclick="setAnimation('scroll-right')">Scroll Right</button>
-  <button onclick="setAnimation('fade')">Fade</button>
-  <button onclick="setAnimation('wipe')">Wipe</button>
-  <button onclick="setAnimation('print')">Print</button>
+  <label>Animation Style:
+    <select id="animSelect" onchange="setAnimation(this.value)">
+      <option value="PA_PRINT" selected>Print</option>
+      <option value="PA_SLICE">Slice</option>
+      <option value="PA_MESH">Mesh</option>
+      <option value="PA_FADE">Fade</option>
+      <option value="PA_WIPE">Wipe</option>
+      <option value="PA_WIPE_CURSOR">Wipe Cursor</option>
+      <option value="PA_OPENING">Opening</option>
+      <option value="PA_OPENING_CURSOR">Opening Cursor</option>
+      <option value="PA_CLOSING">Closing</option>
+      <option value="PA_CLOSING_CURSOR">Closing Cursor</option>
+      <option value="PA_RANDOM">Random</option>
+      <option value="PA_BLINDS">Blinds</option>
+      <option value="PA_DISSOLVE">Dissolve</option>
+      <option value="PA_SCROLL_UP">Scroll Up</option>
+      <option value="PA_SCROLL_DOWN">Scroll Down</option>
+      <option value="PA_SCROLL_LEFT">Scroll Left</option>
+      <option value="PA_SCROLL_RIGHT">Scroll Right</option>
+      <option value="PA_SCROLL_UP_LEFT">Scroll Up Left</option>
+      <option value="PA_SCROLL_UP_RIGHT">Scroll Up Right</option>
+      <option value="PA_SCROLL_DOWN_LEFT">Scroll Down Left</option>
+      <option value="PA_SCROLL_DOWN_RIGHT">Scroll Down Right</option>
+      <option value="PA_SCAN_HORIZ">Scan Horizontal</option>
+      <option value="PA_SCAN_HORIZX">Scan Horizontal X</option>
+      <option value="PA_SCAN_VERT">Scan Vertical</option>
+      <option value="PA_SCAN_VERTX">Scan Vertical X</option>
+      <option value="PA_GROW_UP">Grow Up</option>
+      <option value="PA_GROW_DOWN">Grow Down</option>
+    </select>
+  </label>
 
-  <script>
-    const socket = new WebSocket("ws://" + location.hostname + ":81");
+  <div id="positionContainer">
+    <label>Position:
+      <select id="positionSelect" onchange="updatePosition()">
+        <option value="center">Center</option>
+        <option value="left">Left</option>
+        <option value="right">Right</option>
+      </select>
+    </label>
+  </div>
 
-    let currentText = "";
-    let currentSpeed = 50;
-    let currentAnimation = "scroll-left";
+  <label>
+    <input type="checkbox" id="invertCheckbox" onchange="updateInvert()" /> Invert Display
+  </label>
 
-    function updateText() {
-      currentText = document.getElementById("textInput").value;
+  <button onclick="sendState()">Send State</button>
+
+<script>
+  const socket = new WebSocket("ws://" + location.hostname + ":81");
+
+  let currentText = "";
+  let currentSpeed = 50;
+  let currentAnimation = "PA_PRINT";
+  let currentPosition = "center";
+  let invert = false;
+  let socketReady = false;
+
+  const positionableAnimations = ["PA_PRINT", "PA_FADE", "PA_WIPE", "PA_MESH", "PA_DISSOLVE", "PA_BLINDS", "PA_SLICE"];
+
+  socket.onopen = () => {
+    socketReady = true;
+    sendState(); // Send current state once socket is ready
+  };
+
+  function updateText() {
+    currentText = document.getElementById("textInput").value;
+  }
+
+  function updateSpeed() {
+    currentSpeed = parseInt(document.getElementById("speedInput").value) || 50;
+  }
+
+  function updatePosition() {
+    currentPosition = document.getElementById("positionSelect").value;
+
+    sendState()
+  }
+
+  function updateInvert() {
+    invert = document.getElementById("invertCheckbox").checked;
+
+    sendState();
+  }
+
+  function setAnimation(anim) {
+    currentAnimation = anim;
+
+    const positionContainer = document.getElementById("positionContainer");
+    if (positionableAnimations.includes(anim)) {
+      positionContainer.style.display = "block";
+    } else {
+      positionContainer.style.display = "none";
+      currentPosition = "center";
     }
 
-    function updateSpeed() {
-      currentSpeed = parseInt(document.getElementById("speedInput").value) || 50;
-    }
+    sendState();
+  }
 
-    function setAnimation(anim) {
-      currentAnimation = anim;
+  function sendState() {
+    const payload = {
+      id: 1,
+      text: currentText,
+      speed: currentSpeed,
+      animation: currentAnimation,
+      position: currentPosition,
+      invert: invert
+    };
 
-      // Send full state to ESP
-      const payload = {
-        id: 1,
-        text: currentText,
-        speed: currentSpeed,
-        animation: currentAnimation
-      };
-
+    if (socketReady) {
       socket.send(JSON.stringify(payload));
     }
-  </script>
+  }
+
+  // Show position field by default and initialize animation
+  window.onload = () => {
+    setAnimation("PA_PRINT");
+  };
+</script>
 </body>
 </html>
